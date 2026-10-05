@@ -21,7 +21,7 @@ public class CustomerRestController {
     }
 
     @GetMapping("/{id}")
-    public Customer getCustomerById(@PathVariable UUID id){
+    public Customer getCustomerById(@PathVariable Long id){
         return customerService.getCustomerById(id);
     }
 
