@@ -33,7 +33,12 @@ public class EBankService {
     }
 
     public BankAccount saveBankAccount(BankAccount bankAccount){
-        bankAccount.setCreatedAt(LocalDate.now());
-        return bankAccountRepository.save(bankAccount);
+        try{
+            Customer customer=customerRestClient.getCustomerById(bankAccount.getCustomerId());
+            bankAccount.setCreatedAt(LocalDate.now());
+            return bankAccountRepository.save(bankAccount);
+        }catch (Exception e){
+            throw new RuntimeException(e.getMessage());
+        }
     }
 }
