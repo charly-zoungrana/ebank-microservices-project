@@ -6,7 +6,7 @@ import net.zoungrana.customerservice.service.CustomerService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
+
 
 @RestController
 @RequiredArgsConstructor
