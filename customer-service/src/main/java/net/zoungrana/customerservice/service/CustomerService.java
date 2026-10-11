@@ -1,6 +1,7 @@
 package net.zoungrana.customerservice.service;
 
 import lombok.RequiredArgsConstructor;
+import net.zoungrana.customerservice.dto.CustomerDTO;
 import net.zoungrana.customerservice.entities.Customer;
 import net.zoungrana.customerservice.repository.CustomerRepository;
 import org.springframework.ai.mcp.annotation.McpTool;
@@ -26,8 +27,17 @@ public class CustomerService {
                 .orElseThrow(()->new RuntimeException("Customer not found"));
     }
 
-    @McpTool(description="Save Customer")
-    public void saveCustomer(@McpToolParam(description = "Customer to save (name,email)") Customer customer){
+
+    public void saveCustomer( Customer customer){
         customerRepository.save(customer);
+    }
+
+    @McpTool(description="Save Customer")
+    public void saveCustomerByAIAgent(@McpToolParam(description = "Customer to save (name,email)") CustomerDTO customer){
+        Customer entity=Customer.builder()
+                .name(customer.getName())
+                .email(customer.getEmail())
+                .build();
+        customerRepository.save(entity);
     }
 }

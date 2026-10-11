@@ -8,14 +8,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 
-import java.time.LocalDate;
-
 @SpringBootApplication
 @EnableFeignClients
-public class EbankServiceApplication {
+public class EBankServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(EbankServiceApplication.class, args);
+        SpringApplication.run(EBankServiceApplication.class, args);
     }
 
     @Bean
