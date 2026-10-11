@@ -2,6 +2,8 @@ package net.zoungrana.ebankservice.services;
 
 import lombok.RequiredArgsConstructor;
 import net.zoungrana.ebankservice.entities.BankAccount;
+import net.zoungrana.ebankservice.feign.CustomerRestClient;
+import net.zoungrana.ebankservice.model.Customer;
 import net.zoungrana.ebankservice.repository.BankAccountRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,14 +16,20 @@ import java.util.UUID;
 public class EBankService {
 
     private final BankAccountRepository bankAccountRepository;
+    private final CustomerRestClient customerRestClient;
 
     public List<BankAccount> getAllBankAccounts(){
         return bankAccountRepository.findAll();
     }
 
     public BankAccount getBankAccountById(UUID id){
-        return bankAccountRepository.findById(id)
+        BankAccount bankAccount= bankAccountRepository.findById(id)
                 .orElseThrow(()->new RuntimeException("Bank Account not found"));
+
+        Customer customer=customerRestClient.getCustomerById(bankAccount.getCustomerId());
+        bankAccount.setCustomer(customer);
+
+        return bankAccount;
     }
 
     public BankAccount saveBankAccount(BankAccount bankAccount){
