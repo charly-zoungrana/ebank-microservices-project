@@ -118,157 +118,35 @@ flowchart LR
 
 ### 1.4 Diagramme de cas d'utilisation
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'Segoe UI, Helvetica, Arial, sans-serif','fontSize':'14px','primaryColor':'#F1F5F9','primaryBorderColor':'#475569','primaryTextColor':'#0F172A','lineColor':'#64748B','clusterBkg':'#F8FAFC','clusterBorder':'#94A3B8','edgeLabelBackground':'#FFFFFF'}}}%%
-flowchart LR
-    USER(("Utilisateur<br/><small>client REST</small>"))
-    ADMIN(("Administrateur"))
-
-    subgraph SYS["Système E-Bank — Partie 1"]
-        direction TB
-        subgraph GC["Gestion des clients"]
-            UC1(["Consulter la liste des clients"])
-            UC2(["Consulter un client par son id"])
-            UC3(["Ajouter un client"])
-        end
-        subgraph GA["Gestion des comptes bancaires"]
-            UC4(["Consulter la liste des comptes"])
-            UC5(["Consulter un compte et son titulaire"])
-            UC6(["Créer un compte bancaire"])
-            UC7(["Récupérer le client via OpenFeign"])
-            UC8(["Retourner un client par défaut<br/><small>fallback Circuit Breaker</small>"])
-        end
-        subgraph SUP["Supervision"]
-            UC9(["Superviser les instances<br/><small>tableau de bord Eureka</small>"])
-            UC10(["Consulter les bases H2"])
-            UC11(["Explorer l'API<br/><small>Swagger-UI</small>"])
-        end
-    end
-
-    USER --- UC1
-    USER --- UC2
-    USER --- UC3
-    USER --- UC4
-    USER --- UC5
-    USER --- UC6
-    USER --- UC11
-    ADMIN --- UC9
-    ADMIN --- UC10
-
-    UC5 -.->|"«include»"| UC7
-    UC6 -.->|"«include»"| UC7
-    UC8 -.->|"«extend»<br/><small>si Customer-Service<br/>indisponible</small>"| UC7
-
-    classDef actor fill:#FFFFFF,stroke:#334155,color:#0F172A,stroke-width:1.5px
-    classDef uc fill:#F1F5F9,stroke:#475569,color:#0F172A
-    classDef ucalt fill:#FFFFFF,stroke:#64748B,color:#334155,stroke-dasharray:4 3
-    class USER,ADMIN actor
-    class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC9,UC10,UC11 uc
-    class UC8 ucalt
-```
+<p align="center">
+  <img src="docs/diagrams/use-case-partie1.svg" alt="Diagramme de cas d'utilisation — Partie 1" width="820">
+</p>
 
 | Acteur | Description |
 |---|---|
 | **Utilisateur** | Consommateur de l'API (Postman, Swagger-UI, front-end). Il accède aux services via la Gateway. |
 | **Administrateur** | Supervise l'état des instances dans Eureka et inspecte les données dans les consoles H2. |
 
+**Relations entre cas d'utilisation :**
+
+- **«include»** : consulter ou créer un compte **inclut systématiquement** la récupération des informations du titulaire auprès de Customer-Service (appel OpenFeign).
+- **«extend»** : *Fournir un titulaire par défaut* **étend** la récupération du titulaire, **uniquement** quand Customer-Service est indisponible (fallback du Circuit Breaker). Comme le veut la notation UML, la flèche part du cas qui étend et pointe vers le cas de base.
+
 ### 1.5 Diagramme de classes
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'Segoe UI, Helvetica, Arial, sans-serif','fontSize':'13px','primaryColor':'#F1F5F9','primaryBorderColor':'#475569','primaryTextColor':'#0F172A','lineColor':'#64748B','clusterBkg':'#F8FAFC','clusterBorder':'#CBD5E1'}}}%%
-classDiagram
-    direction TB
+<p align="center">
+  <img src="docs/diagrams/class-diagram-partie1.svg" alt="Diagramme de classes — Partie 1" width="760">
+</p>
 
-    namespace customer_service {
-        class Customer {
-            <<Entity>>
-            -Long id
-            -String name
-            -String email
-        }
-        class CustomerRepository {
-            <<Repository>>
-        }
-        class CustomerService {
-            <<Service>>
-            +getAllCustomers() List~Customer~
-            +getCustomerById(Long id) Customer
-            +saveCustomer(Customer customer) void
-        }
-        class CustomerRestController {
-            <<RestController>>
-            +getAllCustomers() List~Customer~
-            +getCustomerById(Long id) Customer
-            +saveCustomer(Customer customer) void
-        }
-    }
-
-    namespace ebank_service {
-        class BankAccount {
-            <<Entity>>
-            -UUID id
-            -String type
-            -double balance
-            -LocalDate createdAt
-            -Long customerId
-            -Customer customer
-        }
-        class CustomerModel["Customer (model)"] {
-            -Long id
-            -String name
-            -String email
-        }
-        class BankAccountRepository {
-            <<Repository>>
-            +findByCustomerId(Long customerId) List~BankAccount~
-        }
-        class CustomerRestClient {
-            <<FeignClient>>
-            +getCustomerById(Long id) Customer
-            +getDefaultCustomer(Long id, Exception e) Customer
-        }
-        class EBankService {
-            <<Service>>
-            +getAllBankAccounts() List~BankAccount~
-            +getBankAccountById(UUID id) BankAccount
-            +saveBankAccount(BankAccount account) BankAccount
-        }
-        class EBankRestController {
-            <<RestController>>
-            +getAllBankAccounts() List~BankAccount~
-            +getBankAccountById(UUID id) BankAccount
-            +saveBankAccount(BankAccount account) BankAccount
-        }
-    }
-
-    class JpaRepository~T, ID~ {
-        <<interface>>
-    }
-
-    CustomerRepository --|> JpaRepository : T = Customer, ID = Long
-    BankAccountRepository --|> JpaRepository : T = BankAccount, ID = UUID
-
-    CustomerRestController --> CustomerService
-    CustomerService --> CustomerRepository
-    CustomerRepository ..> Customer : persiste
-
-    EBankRestController --> EBankService
-    EBankService --> BankAccountRepository
-    EBankService --> CustomerRestClient
-    BankAccountRepository ..> BankAccount : persiste
-    BankAccount --> "0..1" CustomerModel : customer «Transient»
-    CustomerRestClient ..> CustomerModel : retourne
-
-    CustomerRestClient ..> CustomerRestController : HTTP GET /customers/{id}
-    Customer "1" .. "0..*" BankAccount : référencé par customerId
-```
+Le diagramme présente les **entités** et le **modèle** de chaque microservice. Chaque service est encadré dans son propre paquetage, ce qui fait ressortir que les deux services ne partagent ni code ni base de données.
 
 **Points de conception :**
 
-- **Pas de relation JPA entre services.** `BankAccount` ne stocke que l'identifiant du client (`customerId`). L'objet `customer` est annoté `@Transient` : il n'est pas persisté, mais complété à la volée par un appel OpenFeign.
-- **Modèle local du client.** EBank-Service définit sa propre classe `Customer` (package `model`), sans annotation JPA. Elle sert uniquement à désérialiser la réponse de Customer-Service, ce qui évite de partager du code entre microservices.
+- **Pas de relation JPA entre services.** `BankAccount` ne stocke que l'identifiant du client (`customerId`). L'attribut `customer` est annoté `@Transient` : il n'est pas persisté, mais complété à la volée par un appel OpenFeign.
+- **Modèle local du client.** EBank-Service définit sa propre classe `Customer` (package `model`, stéréotype «Model»), sans annotation JPA. Elle sert uniquement à recevoir la réponse de Customer-Service, ce qui évite de partager du code entre microservices.
 - **Identifiants.** `Customer` utilise un `Long` auto-incrémenté (`IDENTITY`) et `BankAccount` un `UUID` généré (`GenerationType.UUID`).
-- **Architecture en couches** dans chaque service : `web` (contrôleurs REST), `service` (logique métier), `repository` (accès aux données), `entities` (modèle persistant).
+
+> Les sources PlantUML des diagrammes se trouvent dans [`docs/diagrams/`](docs/diagrams/).
 
 ### 1.6 Description des microservices
 
@@ -431,14 +309,12 @@ e-bank-ms-project/
 │   └── config/DynamicRoutesConfig.java
 ├── customer-service/
 │   ├── entities/Customer.java
-│   ├── dto/CustomerDTO.java
 │   ├── repository/CustomerRepository.java
 │   ├── service/CustomerService.java
 │   └── web/CustomerRestController.java
 └── ebank-service/
     ├── entities/BankAccount.java
     ├── model/Customer.java
-    ├── dto/BankAccountDTO.java
     ├── feign/CustomerRestClient.java
     ├── repository/BankAccountRepository.java
     ├── services/EBankService.java
