@@ -1,0 +1,65 @@
+@startuml class-diagram-partie1
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam defaultFontColor #0F172A
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #475569
+skinparam ArrowFontColor #334155
+skinparam ArrowFontSize 11
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #334155
+  HeaderBackgroundColor #E2E8F0
+  StereotypeFontColor #475569
+  StereotypeFontSize 11
+}
+skinparam package {
+  BackgroundColor #F8FAFC
+  BorderColor #475569
+  FontStyle bold
+}
+skinparam note {
+  BackgroundColor #F1F5F9
+  BorderColor #94A3B8
+  FontSize 11
+}
+hide circle
+hide empty methods
+left to right direction
+
+package "customer-service" <<Rectangle>> {
+  class Customer <<Entity>> {
+    - id : Long
+    - name : String
+    - email : String
+  }
+}
+
+package "ebank-service" <<Rectangle>> {
+  class BankAccount <<Entity>> {
+    - id : UUID
+    - type : String
+    - balance : double
+    - createdAt : LocalDate
+    - customerId : Long
+    - customer : Customer
+  }
+  class "Customer" as CustomerModel <<Model>> {
+    - id : Long
+    - name : String
+    - email : String
+  }
+}
+
+BankAccount "0..*" --> "1" CustomerModel : customer\n<<Transient>>
+CustomerModel ..> Customer : <<représente>>\nvia OpenFeign
+
+note bottom of BankAccount
+  <b>customerId</b> référence l'identifiant
+  d'un client de customer-service.
+  L'attribut <b>customer</b> n'est pas persisté :
+  il est chargé par appel REST (OpenFeign).
+end note
+@enduml
