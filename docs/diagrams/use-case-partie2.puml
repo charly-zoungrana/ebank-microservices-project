@@ -1,0 +1,58 @@
+@startuml use-case-partie2
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam defaultFontColor #0F172A
+skinparam ArrowColor #475569
+skinparam ArrowFontColor #334155
+skinparam ArrowFontSize 11
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #334155
+}
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #475569
+}
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #334155
+  FontStyle bold
+}
+
+actor "Utilisateur" as U
+
+rectangle "EBank Bot — Partie 2" {
+  usecase "Discuter avec l'assistant\nvia Discord" as UC1
+  usecase "Discuter avec l'assistant\nvia Telegram" as UC2
+  usecase "Interroger l'assistant\nvia l'API REST" as UC3
+  usecase "Joindre une image\nà la question" as UC4
+
+  usecase "Générer une réponse\n(agent IA)" as UC5
+  usecase "Conserver l'historique\nde la conversation" as UC6
+
+  usecase "Consulter les clients\net les comptes" as UC7
+  usecase "Créer un client\nou un compte" as UC8
+}
+
+rectangle "<<system>>\nLLM\n(Groq / OpenAI)" as LLM
+rectangle "<<system>>\nServeurs MCP\n(Customer-Service,\nEBank-Service)" as MCP
+
+U -- UC1
+U -- UC2
+U -- UC3
+
+UC4 ..> UC2 : <<extend>>
+UC1 ..> UC5 : <<include>>
+UC2 ..> UC5 : <<include>>
+UC3 ..> UC5 : <<include>>
+UC5 ..> UC6 : <<include>>
+UC7 ..> UC5 : <<extend>>\n[la question nécessite\ndes données bancaires]
+UC8 ..> UC5 : <<extend>>\n[l'utilisateur demande\nune création]
+
+UC5 -- LLM
+UC7 -- MCP
+UC8 -- MCP
+@enduml

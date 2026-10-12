@@ -1,0 +1,94 @@
+@startuml class-diagram-partie2
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam defaultFontColor #0F172A
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #475569
+skinparam ArrowFontColor #334155
+skinparam ArrowFontSize 11
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #334155
+  HeaderBackgroundColor #E2E8F0
+  StereotypeFontColor #475569
+  StereotypeFontSize 11
+}
+skinparam package {
+  BackgroundColor #F8FAFC
+  BorderColor #475569
+  FontStyle bold
+}
+hide circle
+hide empty members
+
+package "ebank-bot" <<Rectangle>> {
+  class EBankBotController <<RestController>> {
+    + chat(query : String, conversationId : String) : String
+  }
+  class DiscordBot <<DiscordController>> {
+    - perform(event : MessageReceivedEvent) : void
+  }
+  class TelegramBot <<Component>> {
+    - telegramBotToken : String
+    + onUpdateReceived(update : Update) : void
+    + getBotUsername() : String
+    - sendTextMessage(chatId : long, text : String) : void
+    - sendTypingQuestion(chatId : long) : void
+  }
+  class EBankAIAgent <<Service>> {
+    - chatClient : ChatClient
+    + chat(prompt : Prompt, conversationId : String) : String
+  }
+}
+
+package "Spring AI" <<Rectangle>> {
+  interface ChatClient
+  interface ChatMemory
+  interface ToolCallbackProvider
+  class MessageChatMemoryAdvisor
+}
+
+package "customer-service  ·  serveur MCP" <<Rectangle>> {
+  class CustomerService <<Service>> {
+    + getAllCustomers() : List<Customer>
+    + getCustomerById(id : Long) : Customer
+    + saveCustomerByAIAgent(customer : CustomerDTO) : void
+  }
+  class CustomerDTO <<DTO>> {
+    - name : String
+    - email : String
+  }
+}
+
+package "ebank-service  ·  serveur MCP" <<Rectangle>> {
+  class EBankService <<Service>> {
+    + getAllBankAccounts() : List<BankAccount>
+    + getBankAccountById(id : UUID) : BankAccount
+    + saveBankAccountByAIAgent(account : BankAccountDTO) : BankAccount
+  }
+  class BankAccountDTO <<DTO>> {
+    - type : String
+    - balance : double
+    - customerId : Long
+  }
+}
+
+class TelegramLongPollingBot
+
+TelegramBot --|> TelegramLongPollingBot
+EBankBotController --> EBankAIAgent
+DiscordBot --> EBankAIAgent
+TelegramBot --> EBankAIAgent
+
+EBankAIAgent --> ChatClient
+EBankAIAgent ..> ChatMemory : mémoire par\nconversationId
+EBankAIAgent ..> MessageChatMemoryAdvisor
+EBankAIAgent ..> ToolCallbackProvider : tools MCP
+
+ToolCallbackProvider ..> CustomerService : <<MCP>>\nStreamable HTTP
+ToolCallbackProvider ..> EBankService : <<MCP>>\nStreamable HTTP
+CustomerService ..> CustomerDTO
+EBankService ..> BankAccountDTO
+@enduml
