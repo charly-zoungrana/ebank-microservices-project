@@ -3,6 +3,7 @@ package net.zoungrana.ebankbot.agents;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.stereotype.Service;
@@ -30,9 +31,9 @@ public class EBankAIAgent {
                 .build();
     }
 
-    public String chat(String query,String conversationId){
+    public String chat(Prompt prompt, String conversationId){
 
-        return chatClient.prompt(query)
+        return chatClient.prompt(prompt)
                 .advisors(a->a.param(ChatMemory.CONVERSATION_ID,conversationId) )
                 .call()
                 .content();
